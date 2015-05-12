@@ -28,14 +28,6 @@ function LabelEvent(label, createdAt, updatedAt) {
 };
 
 /// local functions 
-function genResultArray(arr) {
-  var outArr = [];
-  arr.forEach(function (elem) {
-    outArr.push({ 'timestamp': elem.get('timestamp') });
-  });
-  return outArr;
-};
-
 function retrieveAPI(locationList, micList, sensorList) {
   var postData = {
     "filter": 120000,
@@ -90,9 +82,21 @@ AV.Cloud.define('getLabelEvents', function (request, response) {
         locationQuery.find()
         ).then(function (micList, sensorList, locationList) {
         console.log("In when's then");
-        labelEvent.addMicList(genResultArray(micList));
-        labelEvent.addSensorList(genResultArray(sensorList));
-        labelEvent.addLocationList(genResultArray(locationList));
+        var micListResult = [];
+        micList.forEach(function(userMic) {
+          micListResult.push({'timestamp':userMic.get('timestamp'), 'soudTag':userMic.get('soudTag')});
+        });
+        labelEvent.addMicList(micListResult);
+        var sensorListResult = [];
+        sensorList.forEach(function(userSensor) {
+          sensorListResult.push({'timestamp':userSensor.get('timestamp'), 'motion':userSensor.get('motion')});
+        });
+        labelEvent.addSensorList(sensorListResult);
+        var locationListResult = [];
+        locationList.forEach(function (userLocation) {
+          locationListResult.push({'timestamp': userLocation.get('timestamp'), 'location':userLocation.get('location')});
+        });
+        labelEvent.addLocationList(locationListResult);
         labelEvents.push(labelEvent);
         return AV.Promise.as('Done');
       }));
