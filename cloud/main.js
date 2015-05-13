@@ -52,7 +52,7 @@ function retrieveAPI(locationList, micList, sensorList) {
 };
 
 
-AV.Cloud.define('getLabelEvents', function (request, response) {
+AV.Cloud.define('fetchLabelEvents', function (request, response) {
   var labelEvents = new Array(); // for API return
   
   // find specify tag
@@ -62,10 +62,10 @@ AV.Cloud.define('getLabelEvents', function (request, response) {
   var eventQuery = new AV.Query('Event');
   eventQuery.matchesQuery('label', labelQuery);
   eventQuery.find().then(function (events) {
-    console.log('In eventQuery then');
+    //console.log('In eventQuery then');
     var promises = [];
     events.forEach(function (event) {
-      console.log('In forEach');
+      //console.log('In forEach');
       var labelEvent = new LabelEvent(request.params.label, event.createdAt, event.updatedAt);
       // find UserMic which point to Event
       var micQuery = new AV.Query('UserMic');
@@ -81,7 +81,7 @@ AV.Cloud.define('getLabelEvents', function (request, response) {
         sensorQuery.find(),
         locationQuery.find()
         ).then(function (micList, sensorList, locationList) {
-        console.log("In when's then");
+        //console.log("In when's then");
         var micListResult = [];
         micList.forEach(function(userMic) {
           micListResult.push({'timestamp':userMic.get('timestamp'), 'soudTag':userMic.get('soudTag')});
@@ -101,7 +101,7 @@ AV.Cloud.define('getLabelEvents', function (request, response) {
         return AV.Promise.as('Done');
       }));
     });
-    console.log('before return');
+    //console.log('before return');
     return AV.Promise.when(promises);
   }, function (error) {
       response.error('getLabelEvents error when query Event');
@@ -112,36 +112,15 @@ AV.Cloud.define('getLabelEvents', function (request, response) {
     labelEvents.forEach(function (labelEvent) {
       promises.push(
           retrieveAPI(labelEvent.locationList, labelEvent.micList, labelEvent.sensorList).then(function (senzList) {
-            console.log('addSenzList');
+            //console.log('addSenzList');
             labelEvent.addSenzList(senzList);
           })
         );
     });
     return AV.Promise.when(promises);
   }).then(function () {
-    console.log('** labelEvents: **');
-    console.log(labelEvents);
+    //console.log('** labelEvents: **');
+    //console.log(labelEvents);
     response.success(labelEvents);
-  });
-});
-
-
-AV.Cloud.define('promiseTest', function (request, response) {
-  var eventQuery = new AV.Query('Event');
-
-  function doQuery(label) {
-    var labelQuery = new AV.Query('Label');
-    labelQuery.equalTo('tag', label);
-    eventQuery.matchesQuery('label', labelQuery);
-    console.log('find label=' + label);
-    return eventQuery.find();
-  }
-
-  AV.Promise.all([
-    doQuery('shopping'),
-    doQuery('dining_out')
-  ]).then(function (result1) {
-    console.log(result1);
-    console.log('---------------');
   });
 });
